@@ -1,0 +1,4 @@
+O objetivo dos arquivos contidos nesta pasta eh o de implementar um escalonador de tarefas a nivel de usuario.
+Utiliza recursos de Linux e a explicacao da problematica e dos requisitos de projeto encontra-se no link abaixo:
+
+http://www.lisha.ufsc.br/teaching/os/exercise/ulthreads.html
