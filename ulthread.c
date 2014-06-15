@@ -146,6 +146,53 @@ ULThread * list_remove_tid(ULList * l, int tid) {
     return ret;
 }
 
+
+/*************************************************
+ * void plist_insert(ULList * l, ULThread *t)
+ *
+ * Insert thread by priority
+ * args: ULList * list, ULThread * thread
+ * 
+ * *********************************************/
+void plist_insert(ULList * l, ULThread *t) {
+
+    ULThread * ret = 0;
+    ULList * tempList = 0;
+    //if empty list, the thread will be simply added
+    if (l->size == 0) {
+        l->head = t;
+        l->tail = t;
+        l->size++;
+    } else {
+        if (t->priority == THREAD_PRIORITY_LOWEST) {
+            list_append(l,t);
+        } 
+        else {
+            ret = l->tail;
+            while (ret != 0) {  //sweeps tail to head
+                if (ret->priority <= t->priority) {
+                    break;
+                } else {
+                    ret = ret->prev;
+                }
+            }
+            if (ret != 0) {
+                /*Tests if it is TAIL*/
+                if (ret->next == 0) list_append(l,t);
+                else {
+                    t->next = ret->next;
+                    ret->next->prev = t;
+                    ret->next = t;
+                    t->prev = ret;
+                    l->size++;
+                }
+            } else {
+                //sweeped all the list, and all the elements (or the only one) have/has low priority than t
+                list_insert(l,t);
+            }
+        }
+    }
+}
 /*************************************************
  * void list_insert(ULList * l, ULThread *t)
  *
@@ -180,6 +227,7 @@ void list_append(ULList * l, ULThread * t) {
         l->tail = t;
         l->size++;
     } else {
+        t->next = 0; //bug fix:14/06
         t->prev = l->tail;
         l->tail->next = t;
         l->tail = t;
@@ -191,7 +239,7 @@ void list_append(ULList * l, ULThread * t) {
  * Thread manipulation functions
  * ************************************************/
 
-int create(void(*entry)(int), int arg) {
+int create(void(*entry)(int), int arg, int priority) {
 
     if(sch.last_tid > MAX_THREADS) 
         return -1;
@@ -206,7 +254,7 @@ int create(void(*entry)(int), int arg) {
     thread->waiting.size = 0;
     thread->prev = 0;
     thread->next = 0;
-
+    thread->priority = priority;
 
     //SIGSTKSZ esta declarado em /usr/sys/ucontext.h
     thread->context->uc_link          = 0;
@@ -216,7 +264,8 @@ int create(void(*entry)(int), int arg) {
     getcontext(thread->context);
     makecontext(thread->context, (void (*)(void)) entry, 1, arg);
 
-    list_append(&sch.ready, thread);
+    //list_append(&sch.ready, thread);
+    plist_insert(&sch.ready, thread); //insert with priority support
 
     return thread->tid;
 }
@@ -280,6 +329,38 @@ void finish(int ret_val) {
         sch.running= list_removeHead(&sch.ready);
         sch.running->state = RUNNING;
         swapcontext(thr->context, sch.running->context);
+    }
+}
+
+const char * get_threadState(enum ULState state) {
+    switch(state) {
+        case RUNNING: return "RUNNING";
+        case READY: return "READY";
+        case WAITING: return "WAITING";
+        case FINISHING: return "FINISHING";
+        default: return "ERROR";                
+    }
+}
+
+const char * get_threadPriority(enum ULPriority priority) {
+    switch(priority) {
+        case THREAD_PRIORITY_TIME_CRITICAL: return "THREAD_PRIORITY_TIME_CRITICAL";
+        case THREAD_PRIORITY_HIGHEST: return "THREAD_PRIORITY_HIGHEST";
+        case THREAD_PRIORITY_ABOVE_NORMAL: return "THREAD_PRIORITY_ABOVE_NORMAL";
+        case THREAD_PRIORITY_NORMAL: return "THREAD_PRIORITY_NORMAL";
+        case THREAD_PRIORITY_BELOW_NORMAL: return "THREAD_PRIORITY_BELOW_NORMAL";
+        case THREAD_PRIORITY_LOWEST: return "THREAD_PRIORITY_LOWEST";
+        default: return "ERROR";                
+    }
+}
+
+void print_list(ULList * l) {
+
+    ULThread * handler;
+    handler = l->head;
+    while (handler != 0) {
+        printf("thread ID: %d\tpriority: %s\tstate: %s\n", handler->tid, get_threadPriority(handler->priority), get_threadState(handler->state));
+        handler=handler->next;
     }
 }
 

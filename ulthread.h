@@ -51,6 +51,15 @@ typedef enum ULState {
     FINISHING
 } ULState;
 
+typedef enum ULPriority {
+    THREAD_PRIORITY_TIME_CRITICAL,
+    THREAD_PRIORITY_HIGHEST,
+    THREAD_PRIORITY_ABOVE_NORMAL,
+    THREAD_PRIORITY_NORMAL,
+    THREAD_PRIORITY_BELOW_NORMAL,
+    THREAD_PRIORITY_LOWEST
+} ULPriority;
+
 //resolve o problema de dependencia circular
 //forward declaration
 struct ULThread;
@@ -68,6 +77,7 @@ typedef struct ULThread {
     ucontext_t * context;  //dentro de ucontext.h
     int state;
     int ret_val;
+    int priority;
     ULList waiting;
     struct ULThread  * next;
     struct ULThread  * prev;
@@ -87,6 +97,9 @@ ULThread * list_removeHead(ULList * l);
 ULThread * list_remove_tid(ULList * l, int tid);
 void list_insert(ULList * l, ULThread *t);
 void list_append(ULList * l, ULThread * t); 
+void plist_insert(ULList * l, ULThread * t);
+const char * get_threadState(enum ULState state);
+const char * get_threadPriority(enum ULPriority priority);
 
 //void reschedule(void);
 
@@ -120,7 +133,7 @@ void list_append(ULList * l, ULThread * t);
  */
 
 int init(void);
-int create(void(*entry)(int), int arg);
+int create(void(*entry)(int), int arg, int priority);
 int join(int tid, int * ret_val);
 void finish(int ret_val);
 void yield(void);
