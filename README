@@ -4,6 +4,16 @@ Utiliza recursos de Linux e a explicacao da problematica e dos requisitos de pro
 http://www.lisha.ufsc.br/teaching/os/exercise/ulthreads.html
 
 
-
-criar thread idle
 criar preepmcao de tarefa
+
+quando a tarefa de maior prioridade tiver um periodo de wait, congelar esta tarefa por <wait> e liberar o processador, reinserir a tarefa (reschedule) apos o periodo de <wait>.
+
+implementar metodo para parar e retornar o reschedule:feito
+
+passar a inicializacao do timer para a funcao init:feito
+
+testar prioridade da tarefa no reschedule, rescalonar somente quando a prioridade do head da lista de ready for menor ou igual a prioridade da thread running: feito
+
+proteger todos os acessos à lista do escalonador, para evitar quebra de zona critica (criacao de threads, insercoes na lista)
+
+
